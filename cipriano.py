@@ -16,7 +16,9 @@ def search_web(query: str) -> str:
     tavily_key = os.getenv("TAVILY_API_KEY")
     if not tavily_key:
         return "TAVILY_API_KEY não configurada no Render."
-    search = TavilySearchResults(max_results=3) # Key já injetada no ambiente
+    
+    # O Tavily lerá a chave automaticamente da variável de ambiente TAVILY_API_KEY
+    search = TavilySearchResults(max_results=3) 
     return search.invoke(query)
 
 tools = [search_web]
@@ -35,18 +37,30 @@ def executar_agente(mensagem_usuario: str):
     """Função que o app.py vai chamar"""
     api_key = os.getenv("GOOGLE_API_KEY")
     
-    # Usando gemini-1.5-flash para maior estabilidade no Render
+    if not api_key:
+        return "Erro: GOOGLE_API_KEY não encontrada no ambiente do Render."
+    
+    # Modelo estável para produção
     model = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash", 
+        model="gemini-3-flash-preview", 
         temperature=0,
         api_key=api_key
     )
     
-    agent = create_react_agent(model=model, tools=tools, state_modifier=system_message)
+    # AJUSTE REALIZADO: Alterado 'state_modifier' para 'prompt'
+    agent = create_react_agent(
+        model=model, 
+        tools=tools, 
+        prompt=system_message
+    )
     
-    # Executa e pega a última mensagem da resposta
+    # Executa o grafo do agente
     inputs = {"messages": [("user", mensagem_usuario)]}
     config = {"configurable": {"thread_id": "thread-1"}}
     
-    resultado = agent.invoke(inputs, config)
-    return resultado["messages"][-1].content
+    try:
+        resultado = agent.invoke(inputs, config)
+        # Retorna o conteúdo da última mensagem (a resposta do agente)
+        return resultado["messages"][-1].content
+    except Exception as e:
+        return f"Erro na execução do agente: {str(e)}"
