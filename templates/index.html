@@ -1,33 +1,106 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <title>Cipriano Agent</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cipriano | Intelligence System</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
-        #chat-box { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; margin-bottom: 10px; }
+        :root {
+            --bg-color: #0d1117;
+            --container-bg: #161b22;
+            --text-color: #c9d1d9;
+            --accent-color: #238636; /* Verde Don Corleone */
+            --border-color: #30363d;
+        }
+
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-color);
+            font-family: 'Courier New', Courier, monospace; 
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; margin: 0;
+        }
+
+        .terminal {
+            width: 90%; max-width: 700px; height: 80vh;
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px; display: flex; flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .header {
+            padding: 15px; border-bottom: 1px solid var(--border-color);
+            font-weight: bold; text-transform: uppercase; letter-spacing: 2px;
+            color: var(--accent-color); text-align: center;
+        }
+
+        #chat-window {
+            flex: 1; overflow-y: auto; padding: 20px;
+            display: flex; flex-direction: column; gap: 15px;
+        }
+
+        .msg { padding: 10px 15px; border-radius: 5px; max-width: 80%; line-height: 1.4; }
+        .user { align-self: flex-end; background: #21262d; border: 1px solid var(--border-color); }
+        .cipriano { align-self: flex-start; background: #052309; border: 1px solid var(--accent-color); color: #afffaf; }
+
+        .input-area {
+            padding: 20px; border-top: 1px solid var(--border-color);
+            display: flex; gap: 10px;
+        }
+
+        input {
+            flex: 1; background: #0d1117; border: 1px solid var(--border-color);
+            color: white; padding: 12px; border-radius: 4px; outline: none;
+        }
+
+        input:focus { border-color: var(--accent-color); }
+
+        button {
+            background: var(--accent-color); color: white; border: none;
+            padding: 0 20px; border-radius: 4px; cursor: pointer;
+            font-weight: bold; text-transform: uppercase;
+        }
+
+        button:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
-    <h1>Agente Cipriano</h1>
-    <div id="chat-box"></div>
-    <input type="text" id="pergunta" placeholder="Digite aqui..." style="width: 80%">
-    <button onclick="enviar()">Enviar</button>
+    <div class="terminal">
+        <div class="header">Cipriano - Strategic Security Intelligence</div>
+        <div id="chat-window">
+            <div class="msg cipriano">Aguardando ordens. O que deseja investigar hoje?</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="pergunta" placeholder="Digite sua requisição..." onkeypress="handleKey(event)">
+            <button onclick="enviar()">Executar</button>
+        </div>
+    </div>
 
     <script>
-        async def enviar() {
-            const input = document.getElementById('pergunta');
-            const box = document.getElementById('chat-box');
-            const formData = new FormData();
-            formData.append('pergunta', input.value);
+        function handleKey(e) { if (e.key === 'Enter') enviar(); }
 
-            box.innerHTML += `<p><strong>Você:</strong> ${input.value}</p>`;
-            
-            const response = await fetch('/chat', { method: 'POST', body: formData });
-            const data = await response.json();
-            
-            box.innerHTML += `<p><strong>Cipriano:</strong> ${data.resposta}</p>`;
+        async function enviar() {
+            const input = document.getElementById('pergunta');
+            const window = document.getElementById('chat-window');
+            const texto = input.value;
+            if (!texto) return;
+
             input.value = '';
-            box.scrollTop = box.scrollHeight;
+            window.innerHTML += `<div class="msg user"><strong>DIRETRIZ:</strong> ${texto}</div>`;
+            window.scrollTop = window.scrollHeight;
+
+            const formData = new FormData();
+            formData.append('pergunta', texto);
+
+            try {
+                const res = await fetch('/chat', { method: 'POST', body: formData });
+                const data = await res.json();
+                window.innerHTML += `<div class="msg cipriano"><strong>CIPRIANO:</strong> ${data.resposta}</div>`;
+            } catch (err) {
+                window.innerHTML += `<div class="msg cipriano" style="color: red;">ERRO NA COMUNICAÇÃO.</div>`;
+            }
+            window.scrollTop = window.scrollHeight;
         }
     </script>
 </body>
