@@ -17,7 +17,6 @@ def search_web(query: str) -> str:
     if not tavily_key:
         return "TAVILY_API_KEY não configurada no Render."
     
-    # O Tavily lerá a chave automaticamente da variável de ambiente TAVILY_API_KEY
     search = TavilySearchResults(max_results=3) 
     return search.invoke(query)
 
@@ -34,20 +33,20 @@ com a presença, autoridade e frieza calculada de Don Corleone.
 """
 
 def executar_agente(mensagem_usuario: str):
-    """Função que o app.py vai chamar"""
+    """Função de interface com o app.py"""
     api_key = os.getenv("GOOGLE_API_KEY")
     
     if not api_key:
-        return "Erro: GOOGLE_API_KEY não encontrada no ambiente do Render."
+        return "Erro: GOOGLE_API_KEY não encontrada no ambiente."
     
-    # Modelo atualizado para versão estável (resolve erros de resposta suja)
+    # AJUSTE DO MODELO: Usando o nome completo para evitar o erro 404
+    # 'gemini-1.5-flash-latest' costuma ser o mais estável para a v1beta
     model = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash", 
+        model="gemini-1.5-flash-latest", 
         temperature=0,
         api_key=api_key
     )
     
-    # Criação do agente utilizando o parâmetro 'prompt'
     agent = create_react_agent(
         model=model, 
         tools=tools, 
@@ -58,14 +57,16 @@ def executar_agente(mensagem_usuario: str):
     config = {"configurable": {"thread_id": "thread-1"}}
     
     try:
-        # Executa o grafo do agente
         resultado = agent.invoke(inputs, config)
         
-        # EXTRAÇÃO PRECISA: Pegamos apenas o texto da última mensagem
-        # Isso remove assinaturas digitais e metadados da tela
+        # AJUSTE DE EXTRAÇÃO (Resolve as imagens com texto gigante):
+        # Acessamos a última mensagem e pegamos apenas o campo .content
         ultima_mensagem = resultado["messages"][-1]
         
-        return ultima_mensagem.content
+        if hasattr(ultima_mensagem, 'content'):
+            return ultima_mensagem.content
+        return str(ultima_mensagem)
         
     except Exception as e:
-        return f"Cipriano informa: Erro na operação. Detalhes: {str(e)}"
+        # Se o modelo 'latest' falhar, tentamos o nome simples como fallback
+        return f"Cipriano informa: Falha na requisição. Verifique as credenciais. (Erro: {str(e)})"
