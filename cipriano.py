@@ -18,7 +18,7 @@ def search_web(query: str) -> str:
     UTILIZE SEMPRE QUE:
     1. Precisar de informações atualizadas (notícias, status de serviços).
     2. Precisar consultar documentações externas (Fiserv, Bandeiras, Banco Central).
-    3. O usuário perguntar sobre assuntos gerais (clima, notícias).
+    3. O usuário perguntar sobre assuntos gerais (clima, notícias, etc).
     """
     tavily_key = os.getenv("TAVILY_API_KEY")
     if not tavily_key:
