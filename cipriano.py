@@ -58,9 +58,9 @@ def executar_agente(mensagem_usuario: str, imagem_b64: str = None):
         return "Erro CRÍTICO: GROQ_API_KEY não configurada."
 
     # --- MUDANÇA IMPORTANTE: MODELO VISION ---
-    # Usamos o Llama 3.2 Vision para poder enxergar as imagens
+    # Usamos o Llama 3.1 Vision para poder enxergar as imagens
     model = ChatGroq(
-        model="llama-3.2-11b-vision-preview", 
+        model="llama-3.1-8b-instant", 
         temperature=0.4,
         api_key=groq_key
     )
