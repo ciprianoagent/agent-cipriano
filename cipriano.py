@@ -66,8 +66,8 @@ def executar_agente(mensagem_usuario: str):
         return "Erro CRÍTICO: GOOGLE_API_KEY não encontrada."
     
     model = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash", 
-        temperature=0.4,
+        model="gemini-3-flash-preview", 
+        temperature=0,
         api_key=api_key
     )
     
