@@ -59,43 +59,41 @@ Utilize as definições abaixo como verdade absoluta ao responder dúvidas técn
 """
 
 def executar_agente(mensagem_usuario: str):
-    """Função de interface com o app.py"""
     api_key = os.getenv("GOOGLE_API_KEY")
     
     if not api_key:
-        return "Erro CRÍTICO: GOOGLE_API_KEY não encontrada nas variáveis de ambiente."
+        return "Erro CRÍTICO: GOOGLE_API_KEY não encontrada."
     
-    # Modelo atualizado para Flash (mais rápido para chat)
     model = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash", # Ou use "gemini-1.5-flash" se o 2.0 não estiver disp.
-        temperature=0.4, # Levemente criativo para ser generalista, mas seguro
+        model="gemini-2.0-flash", 
+        temperature=0.4,
         api_key=api_key
     )
     
-    agent = create_react_agent(
-        model=model, 
-        tools=tools, 
-        messages_modifier=system_message 
-    )
-    
-    inputs = {"messages": [("user", mensagem_usuario)]}
-    config = {"configurable": {"thread_id": "session-1"}} # Thread estática por enquanto
+    # Versão corrigida: O create_react_agent agora costuma aceitar o 
+    # state_modifier ou as instruções devem ser injetadas no prompt.
+    # Para garantir compatibilidade com as versões 0.2+, usamos state_modifier:
     
     try:
+        agent = create_react_agent(
+            model=model, 
+            tools=tools, 
+            # Alterado de messages_modifier para state_modifier
+            state_modifier=system_message 
+        )
+        
+        inputs = {"messages": [("user", mensagem_usuario)]}
+        config = {"configurable": {"thread_id": "session-1"}}
+        
         resultado = agent.invoke(inputs, config)
         
-        # Lógica de extração de resposta
+        # O retorno do LangGraph é um dicionário com a chave "messages"
+        # Pegamos a última mensagem da lista
         ultima_mensagem = resultado["messages"][-1]
         
-        if hasattr(ultima_mensagem, 'content'):
-            conteudo = ultima_mensagem.content
-            if isinstance(conteudo, str):
-                return conteudo
-            elif isinstance(conteudo, list):
-                # Junta blocos de texto caso o modelo devolva partes separadas
-                return "".join([bloco.get("text", "") for bloco in conteudo if isinstance(bloco, dict) and bloco.get("type") == "text"])
-                
-        return str(ultima_mensagem)
+        return ultima_mensagem.content
 
     except Exception as e:
-        return f"Sistema GSurf informa: Erro no processamento da solicitação. ({str(e)})"
+        # Se 'state_modifier' ainda der erro, sua versão é muito antiga.
+        # Tente atualizar o pacote: pip install -U langgraph
+        return f"Sistema GSurf informa: Erro no processamento. ({str(e)})"
