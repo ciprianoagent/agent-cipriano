@@ -51,14 +51,13 @@ Você agora possui VISÃO COMPUTACIONAL: Se o usuário enviar uma imagem, analis
 
 def executar_agente(mensagem_usuario: str, imagem_b64: str = None):
     """
-    Executa o agente. Se imagem_b64 for fornecida, envia para o modelo Vision.
+    Executa o agente. Versão ajustada para Llama 3.1 (Apenas Texto).
     """
     groq_key = os.getenv("GROQ_API_KEY")
     if not groq_key:
         return "Erro CRÍTICO: GROQ_API_KEY não configurada."
 
-    # --- MUDANÇA IMPORTANTE: MODELO VISION ---
-    # Usamos o Llama 3.1 Vision para poder enxergar as imagens
+    # Voltamos para o modelo rápido de texto
     model = ChatGroq(
         model="llama-3.1-8b-instant", 
         temperature=0.4,
@@ -71,20 +70,18 @@ def executar_agente(mensagem_usuario: str, imagem_b64: str = None):
             tools=tools
         )
 
-        # Montagem da mensagem do usuário
+        # --- CORREÇÃO DO ERRO 400 ---
+        # O Llama 3.1-8b NÃO aceita objetos de imagem, apenas strings.
+        # Então, mesmo que venha uma imagem do front, nós preparamos apenas o texto.
+        
+        texto_final = mensagem_usuario
+
         if imagem_b64:
-            # Se tem imagem, montamos o payload multimodal
-            content_payload = [
-                {"type": "text", "text": mensagem_usuario or "Analise esta imagem."},
-                {
-                    "type": "image_url", 
-                    "image_url": {"url": imagem_b64} # O frontend já manda com "data:image/..."
-                }
-            ]
-            user_message = HumanMessage(content=content_payload)
-        else:
-            # Se é só texto
-            user_message = HumanMessage(content=mensagem_usuario)
+            # Adicionamos uma nota interna para o agente saber que houve uma tentativa de envio
+            texto_final += "\n\n[Sistema: O usuário anexou uma imagem, mas seu modelo atual não possui visão computacional. Avise o usuário que você não consegue ver a imagem e peça para ele descrever o que está nela.]"
+
+        # Enviamos como string simples (Isso resolve o erro 'content must be a string')
+        user_message = HumanMessage(content=texto_final)
 
         inputs = {
             "messages": [
