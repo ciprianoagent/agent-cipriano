@@ -75,8 +75,7 @@ def executar_agente(mensagem_usuario: str):
     agent = create_react_agent(
         model=model, 
         tools=tools, 
-        state_modifier=system_message # No LangGraph novo, 'state_modifier' substitui 'prompt' direto em alguns casos, mas 'prompt' funciona no prebuilt
-        # Se der erro de argumento, volte para 'prompt=system_message' dependendo da versão da lib instalada
+        messages_modifier=system_message 
     )
     
     inputs = {"messages": [("user", mensagem_usuario)]}
