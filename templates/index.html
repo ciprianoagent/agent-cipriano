@@ -32,6 +32,8 @@
         .input-area { padding: 20px; border-top: 1px solid #f0f0f0; display: flex; gap: 10px; background: #ffffff; }
         input { flex: 1; background: #f8f9fa; border: 1px solid #ddd; color: var(--text-color); padding: 15px; border-radius: 30px; outline: none; font-family: inherit; font-size: 0.95rem; }
         button { background: var(--primary-color); color: white; border: none; padding: 0 30px; border-radius: 30px; cursor: pointer; font-weight: 600; }
+        .typing-indicator::after { content: '';animation: dots 1.4s infinite; } @keyframes dots { 0% { content: ''; } 33% { content: '.'; } 66% { content: '..'; } 100% { content: '...'; }
+}
     </style>
 </head>
 <body>
@@ -51,17 +53,29 @@
 <script>
 async function enviar() {
     const input = document.getElementById('pergunta');
+    const chat = document.getElementById('chat-window');
     const texto = input.value.trim();
+
     if (!texto) return;
 
+    // Bloqueia input
     input.value = '';
-
-    const chat = document.getElementById('chat-window');
+    input.disabled = true;
 
     // Mensagem do usuário
     chat.innerHTML += `
         <div class="msg-row user-row">
             <div class="msg user-msg">${texto}</div>
+        </div>`;
+    chat.scrollTop = chat.scrollHeight;
+
+    // Loading
+    const loadingId = "loading-" + Date.now();
+    chat.innerHTML += `
+        <div class="msg-row bot-row" id="${loadingId}">
+            <div class="msg bot-msg typing-indicator">
+                Digitando...
+            </div>
         </div>`;
     chat.scrollTop = chat.scrollHeight;
 
@@ -76,19 +90,24 @@ async function enviar() {
 
         const data = await res.json();
 
-        chat.innerHTML += `
-            <div class="msg-row bot-row">
-                <div class="msg bot-msg">${data.resposta}</div>
+        const loadingEl = document.getElementById(loadingId);
+        loadingEl.removeAttribute('id');
+        loadingEl.innerHTML = `
+            <div class="msg bot-msg">
+                ${data.resposta}
             </div>`;
-        chat.scrollTop = chat.scrollHeight;
 
     } catch (err) {
-        chat.innerHTML += `
-            <div class="msg-row bot-row">
-                <div class="msg bot-msg" style="color:red">
-                    Erro ao conectar com o servidor.
-                </div>
+        const loadingEl = document.getElementById(loadingId);
+        loadingEl.innerHTML = `
+            <div class="msg bot-msg" style="color:red">
+                Erro ao conectar com o servidor.
             </div>`;
+    } finally {
+        input.disabled = false;
+        input.focus();
+        chat.scrollTop = chat.scrollHeight;
     }
 }
 </script>
+
