@@ -53,24 +53,42 @@ async function enviar() {
     const input = document.getElementById('pergunta');
     const texto = input.value.trim();
     if (!texto) return;
+
     input.value = '';
 
-```
-const chat = document.getElementById('chat-window');
-chat.innerHTML += `<div class="msg-row user-row"><div class="msg user-msg">${texto}</div></div>`;
+    const chat = document.getElementById('chat-window');
 
-const res = await fetch('/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ pergunta: texto })
-});
+    // Mensagem do usuário
+    chat.innerHTML += `
+        <div class="msg-row user-row">
+            <div class="msg user-msg">${texto}</div>
+        </div>`;
+    chat.scrollTop = chat.scrollHeight;
 
-const data = await res.json();
-chat.innerHTML += `<div class="msg-row bot-row"><div class="msg bot-msg">${data.resposta}</div></div>`;
-chat.scrollTop = chat.scrollHeight;
-```
+    try {
+        const res = await fetch('/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ pergunta: texto })
+        });
 
-} </script>
+        const data = await res.json();
 
-</body>
-</html>
+        chat.innerHTML += `
+            <div class="msg-row bot-row">
+                <div class="msg bot-msg">${data.resposta}</div>
+            </div>`;
+        chat.scrollTop = chat.scrollHeight;
+
+    } catch (err) {
+        chat.innerHTML += `
+            <div class="msg-row bot-row">
+                <div class="msg bot-msg" style="color:red">
+                    Erro ao conectar com o servidor.
+                </div>
+            </div>`;
+    }
+}
+</script>
