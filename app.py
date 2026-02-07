@@ -1,39 +1,54 @@
 import os
-from fastapi import FastAPI, Request
+import uvicorn
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles # Opcional, mas boa prática
 from pydantic import BaseModel
 from typing import Optional
+
+# Importamos a função do arquivo cipriano.py
 from cipriano import executar_agente
-import uvicorn
 
-app = FastAPI()
+app = FastAPI(title="GSurf AI Assistant")
 
-# Configura onde estão os arquivos HTML
+# Configura diretório de templates
+# Certifique-se de ter uma pasta chamada 'templates' e o index.html dentro dela
 templates = Jinja2Templates(directory="templates")
 
-class Pergunta(BaseModel):
+# Modelo de Dados (Protocolo de Comunicação Front-Back)
+class RequestData(BaseModel):
     pergunta: str
-    imagem: Optional[str] = None  # Agora aceita imagem (opcional)
+    imagem: Optional[str] = None
+    session_id: str  # CRUCIAL: Identificador único do usuário para a memória
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    """Exibe o site"""
+    """Renderiza a interface de chat."""
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/chat")
-async def chat(payload: Pergunta):
+async def chat_endpoint(payload: RequestData):
     """
-    Recebe JSON do site, chama o Cipriano
-    e devolve um JSON organizado.
+    Recebe a mensagem + sessão + imagem (opcional)
+    e invoca o agente Cipriano.
     """
     try:
-        # Passamos a pergunta E a imagem (se houver) para o agente
-        resposta_texto = executar_agente(payload.pergunta, payload.imagem)
+        # Chama o agente passando o ID da sessão para manter o contexto
+        resposta_texto = executar_agente(
+            mensagem_usuario=payload.pergunta, 
+            imagem_b64=payload.imagem,
+            session_id=payload.session_id
+        )
+        
         return {"resposta": resposta_texto}
+
     except Exception as e:
-        return {"resposta": f"Erro estratégico: {str(e)}"}
+        print(f"Erro no Endpoint /chat: {e}")
+        # Retorna erro amigável para o front não quebrar
+        return {"resposta": f"⚠️ **Erro de Sistema:** Não foi possível processar sua solicitação. Detalhe: {str(e)}"}
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
+    # Configuração para rodar no Render/Heroku ou Local
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)

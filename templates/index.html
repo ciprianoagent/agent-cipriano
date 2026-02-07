@@ -3,186 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GSurf | AI Assistant</title>
+    <title>GSurf | Cipriano AI</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
     <style>
         :root {
             --primary-color: #0056b3;
-            --secondary-color: #004494;
-            --bg-color: #f4f7f6;
+            --bg-color: #f0f2f5;
             --chat-bg: #ffffff;
             --user-msg-bg: #0056b3;
-            --bot-msg-bg: #f1f1f1;
-            --text-color: #333333;
-            --light-text: #ffffff;
+            --bot-msg-bg: #e4e6eb;
+            --text-color: #050505;
         }
-        body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .main-container { width: 90%; max-width: 900px; height: 90vh; background: var(--chat-bg); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .header { background: white; padding: 20px; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 15px; }
-        .logo-text { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); }
-        .status-badge { background: #e6f4ea; color: #1e8e3e; padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
-        
-        #chat-window { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 20px; background-color: #ffffff; }
-        
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .main-container {
+            width: 95%;
+            max-width: 900px;
+            height: 90vh;
+            background: var(--chat-bg);
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            background: #fff;
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-title { font-size: 1.2rem; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; gap: 10px; }
+        .status-dot { height: 10px; width: 10px; background-color: #31a24c; border-radius: 50%; display: inline-block; }
+
+        /* CHAT AREA */
+        #chat-window {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scroll-behavior: smooth;
+        }
+
         .msg-row { display: flex; width: 100%; }
-        .msg-row.user-row { justify-content: flex-end; }
-        .msg-row.bot-row { justify-content: flex-start; }
-        
-        .msg { padding: 12px 20px; border-radius: 18px; max-width: 75%; line-height: 1.6; font-size: 0.95rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .user-msg { background: var(--user-msg-bg); color: var(--light-text); border-bottom-right-radius: 4px; }
+        .user-row { justify-content: flex-end; }
+        .bot-row { justify-content: flex-start; }
+
+        .msg {
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 80%;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .user-msg { background: var(--user-msg-bg); color: #fff; border-bottom-right-radius: 4px; }
         .bot-msg { background: var(--bot-msg-bg); color: var(--text-color); border-bottom-left-radius: 4px; }
-        
-        /* Markdown formatting */
-        .bot-msg p { margin: 0 0 10px 0; } .bot-msg p:last-child { margin-bottom: 0; }
-        .bot-msg ul, .bot-msg ol { margin: 5px 0 10px 20px; padding: 0; } .bot-msg li { margin-bottom: 5px; }
-        .bot-msg strong { font-weight: 700; color: #000; }
-        
-        /* Imagem enviada pelo usuário no chat */
-        .msg-img-preview { max-width: 100%; border-radius: 8px; margin-top: 5px; display: block; }
 
-        .input-wrapper { border-top: 1px solid #f0f0f0; background: #ffffff; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        
-        /* Área de Preview antes de enviar */
-        #preview-container { display: none; padding: 0 10px; }
-        .preview-box { position: relative; display: inline-block; }
-        .preview-box img { max-height: 80px; border-radius: 8px; border: 1px solid #ddd; }
-        .remove-btn { position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 20px; height: 20px; border: none; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        /* MARKDOWN STYLES (Tabelas, Listas) */
+        .bot-msg table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 0.9rem; }
+        .bot-msg th, .bot-msg td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+        .bot-msg th { background-color: #d0d2d6; font-weight: 600; }
+        .bot-msg pre { background: #2d2d2d; color: #f8f8f2; padding: 10px; border-radius: 6px; overflow-x: auto; }
+        .bot-msg code { font-family: monospace; background: rgba(0,0,0,0.05); padding: 2px 4px; border-radius: 3px; }
 
-        .input-area { display: flex; gap: 10px; align-items: center; }
-        input[type="text"] { flex: 1; background: #f8f9fa; border: 1px solid #ddd; color: var(--text-color); padding: 15px; border-radius: 30px; outline: none; font-family: inherit; font-size: 0.95rem; }
-        
-        /* Botões */
-        .send-btn { background: var(--primary-color); color: white; border: none; padding: 0 30px; height: 50px; border-radius: 30px; cursor: pointer; font-weight: 600; }
-        .attach-btn { background: #e9ecef; color: #555; border: none; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .attach-btn:hover { background: #dde0e3; }
+        /* IMAGENS NO CHAT */
+        .msg-img-sent { max-width: 200px; border-radius: 8px; margin-bottom: 5px; display: block; border: 2px solid #004494; }
 
-        .typing-indicator::after { content: '';animation: dots 1.4s infinite; } @keyframes dots { 0% { content: ''; } 33% { content: '.'; } 66% { content: '..'; } 100% { content: '...'; } }
+        /* INPUT AREA */
+        .input-wrapper {
+            border-top: 1px solid #ddd;
+            padding: 15px;
+            background: #fff;
+        }
+
+        /* Preview de Imagem antes de enviar */
+        #preview-area {
+            display: none;
+            padding-bottom: 10px;
+        }
+        .preview-box {
+            position: relative;
+            display: inline-block;
+        }
+        .preview-box img { height: 80px; border-radius: 8px; border: 1px solid #ccc; }
+        .btn-close-preview {
+            position: absolute; top: -8px; right: -8px;
+            background: #ff4d4f; color: white;
+            border: none; border-radius: 50%;
+            width: 20px; height: 20px;
+            cursor: pointer; font-weight: bold; font-size: 12px;
+        }
+
+        .input-controls { display: flex; gap: 10px; align-items: flex-end; }
+        
+        textarea {
+            flex: 1;
+            padding: 12px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            resize: none;
+            height: 24px; /* Altura inicial */
+            font-family: inherit;
+            max-height: 100px;
+        }
+        textarea:focus { outline: 2px solid var(--primary-color); border-color: transparent; }
+
+        .btn-icon {
+            background: none; border: none; cursor: pointer;
+            font-size: 1.3rem; padding: 10px; color: #555;
+            transition: color 0.2s;
+        }
+        .btn-icon:hover { color: var(--primary-color); }
+        
+        .btn-send {
+            background: var(--primary-color); color: white;
+            border: none; padding: 10px 20px;
+            border-radius: 20px; font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-send:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* Loading Dots */
+        .typing::after { content: '...'; animation: typing 1.5s steps(4, end) infinite; }
+        @keyframes typing { 0%, 100% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+
     </style>
 </head>
 <body>
+
 <div class="main-container">
     <div class="header">
-        <div class="logo-text">GSurf</div>
-        <div class="status-badge">AI Online</div>
+        <div class="header-title">
+            <span class="status-dot"></span> Cipriano (GSurf)
+        </div>
+        <div style="font-size: 0.8rem; color: #666;">v2.0 Vision</div>
     </div>
+
     <div id="chat-window">
-        <div class="msg-row bot-row"><div class="msg bot-msg">Olá. Sou o assistente virtual GSurf.</div></div>
+        <div class="msg-row bot-row">
+            <div class="msg bot-msg">
+                Olá. Sou o Cipriano, especialista da GSurf. <br>
+                Posso ajudar com TEF, erros de transação ou configurações. <br>
+                <strong>Você pode me enviar fotos de erros na tela da maquininha.</strong>
+            </div>
+        </div>
     </div>
 
     <div class="input-wrapper">
-        <div id="preview-container">
+        <div id="preview-area">
             <div class="preview-box">
-                <img id="img-preview-tag" src="" alt="Preview">
-                <button class="remove-btn" onclick="limparImagem()">×</button>
+                <img id="img-preview" src="" alt="">
+                <button class="btn-close-preview" onclick="limparImagem()">×</button>
             </div>
         </div>
 
-        <div class="input-area">
-            <button class="attach-btn" onclick="document.getElementById('file-input').click()">📎</button>
-            <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="processarArquivo(this)">
+        <div class="input-controls">
+            <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="processarImagem(this)">
+            <button class="btn-icon" title="Anexar Imagem" onclick="document.getElementById('file-input').click()">📷</button>
             
-            <input type="text" id="pergunta" placeholder="Digite sua mensagem..." onkeypress="if(event.key==='Enter') enviar()">
-            <button class="send-btn" onclick="enviar()">Enviar</button>
+            <textarea id="texto-input" placeholder="Descreva o problema..." onkeypress="verificarEnter(event)"></textarea>
+            
+            <button class="btn-send" id="btn-enviar" onclick="enviarMensagem()">Enviar</button>
         </div>
     </div>
 </div>
 
 <script>
-let imagemBase64 = null; // Variável para guardar a imagem
+    // --- LÓGICA DE SESSÃO ---
+    // Gera um ID único para este usuário/aba para manter a memória do bot ativa
+    let sessionId = localStorage.getItem("gsurf_session_id");
+    if (!sessionId) {
+        sessionId = "sess_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem("gsurf_session_id", sessionId);
+    }
+    console.log("Session ID:", sessionId);
 
-// Função para converter arquivo em Base64
-function processarArquivo(input) {
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        const reader = new FileReader();
+    let imagemBase64 = null;
 
-        reader.onload = function(e) {
-            imagemBase64 = e.target.result; // Salva a imagem em formato texto base64
-            
-            // Mostra o preview
-            document.getElementById('img-preview-tag').src = imagemBase64;
-            document.getElementById('preview-container').style.display = 'block';
+    // Ajuste automático da altura do textarea
+    const textarea = document.getElementById('texto-input');
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        if(this.value === '') this.style.height = '24px';
+    });
+
+    function verificarEnter(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            enviarMensagem();
         }
-        
-        reader.readAsDataURL(file);
     }
-}
 
-function limparImagem() {
-    imagemBase64 = null;
-    document.getElementById('file-input').value = ''; // Reseta o input
-    document.getElementById('preview-container').style.display = 'none';
-}
-
-async function enviar() {
-    const input = document.getElementById('pergunta');
-    const chat = document.getElementById('chat-window');
-    const texto = input.value.trim();
-
-    // Só impede envio se não tiver texto NEM imagem
-    if (!texto && !imagemBase64) return;
-
-    // Bloqueia input
-    input.value = '';
-    input.disabled = true;
-
-    // Monta o HTML da mensagem do usuário
-    let userHtml = `<div class="msg-row user-row"><div class="msg user-msg">`;
-    if (imagemBase64) {
-        userHtml += `<img src="${imagemBase64}" class="msg-img-preview"><br>`;
+    function processarImagem(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagemBase64 = e.target.result;
+                document.getElementById('img-preview').src = imagemBase64;
+                document.getElementById('preview-area').style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+        // Limpa o value para permitir selecionar a mesma imagem se quiser
+        input.value = ''; 
     }
-    if (texto) {
-        userHtml += `<span>${texto}</span>`;
+
+    function limparImagem() {
+        imagemBase64 = null;
+        document.getElementById('preview-area').style.display = 'none';
     }
-    userHtml += `</div></div>`;
 
-    chat.innerHTML += userHtml;
-    
-    // Esconde preview e guarda a imagem para enviar, depois limpa a var global visualmente
-    const imgParaEnviar = imagemBase64; 
-    limparImagem(); // Limpa preview da tela
-    
-    chat.scrollTop = chat.scrollHeight;
+    async function enviarMensagem() {
+        const inputTexto = document.getElementById('texto-input');
+        const texto = inputTexto.value.trim();
+        const chatWindow = document.getElementById('chat-window');
+        const btnEnviar = document.getElementById('btn-enviar');
 
-    // Loading
-    const loadingId = "loading-" + Date.now();
-    chat.innerHTML += `
-        <div class="msg-row bot-row" id="${loadingId}">
-            <div class="msg bot-msg typing-indicator">
-                Analisando...
-            </div>
-        </div>`;
-    chat.scrollTop = chat.scrollHeight;
+        if (!texto && !imagemBase64) return;
 
-    try {
-        // Envia para o Backend (Texto + Imagem)
-        const res = await fetch('/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                pergunta: texto,
-                imagem: imgParaEnviar // Enviando a string base64
-            })
-        });
+        // UI: Bloquear envio
+        inputTexto.disabled = true;
+        btnEnviar.disabled = true;
 
-        const data = await res.json();
-        const htmlResposta = marked.parse(data.resposta); 
+        // 1. Renderiza mensagem do usuário na tela
+        let userHtml = `<div class="msg-row user-row"><div class="msg user-msg">`;
+        if (imagemBase64) {
+            userHtml += `<img src="${imagemBase64}" class="msg-img-sent"><br>`;
+        }
+        userHtml += `<span>${texto.replace(/\n/g, '<br>')}</span></div></div>`;
+        chatWindow.innerHTML += userHtml;
+        chatWindow.scrollTop = chatWindow.scrollHeight;
 
-        const loadingEl = document.getElementById(loadingId);
-        loadingEl.removeAttribute('id');
-        loadingEl.innerHTML = `<div class="msg bot-msg">${htmlResposta}</div>`;
+        // Salva dados para envio e limpa UI
+        const payload = {
+            pergunta: texto,
+            imagem: imagemBase64,
+            session_id: sessionId // Enviando o ID da sessão!
+        };
 
-    } catch (err) {
-        console.error(err);
-        const loadingEl = document.getElementById(loadingId);
-        if(loadingEl) loadingEl.innerHTML = `<div class="msg bot-msg" style="color:red">Erro ao conectar.</div>`;
-    } finally {
-        input.disabled = false;
-        input.focus();
-        chat.scrollTop = chat.scrollHeight;
-    }
-}
-</script>
-</body>
-</html>
+        inputTexto.value = '';
+        inputTexto.style.height = '24px';
+        limparImagem(); // Limpa preview visual
+
+        // 2. Mostra indicador de digitação
+        const loadingId = "loading-" + Date.now();
+        chatWindow.innerHTML += `
+            <div class="msg-row bot-row" id="${loadingId}">
+                <div class="msg bot-msg typing">Cipriano está analisando</div>
+            </div>`;
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        try {
+            // 3. Envia para o Backend
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            
+            // Remove loading
+            document.getElementById(loadingId).remove();
+
+            // Renderiza

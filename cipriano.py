@@ -1,6 +1,10 @@
 import os
+import datetime
 from dotenv import load_dotenv
+
+# LangChain & LangGraph Imports
 from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.tools import tool
 from langchain_groq import ChatGroq
 from langchain_community.tools.tavily_search import TavilySearchResults
@@ -9,141 +13,185 @@ from langchain_core.messages import SystemMessage, HumanMessage
 load_dotenv()
 
 # ======================================================
-# TOOL — Web Search (Tavily)
+# CONFIGURAÇÕES E CONSTANTES
 # ======================================================
+# Usamos o Llama 3.2 11B Vision (ou 90B) para processar imagens + texto
+MODEL_ID = "llama-3.2-11b-vision-preview" 
+
+# ======================================================
+# FERRAMENTAS (TOOLS)
+# ======================================================
+
+@tool
+def get_current_datetime() -> str:
+    """
+    Retorna a data e hora atual. 
+    Essencial para verificar se o suporte está em horário comercial ou feriados,
+    ou para validar logs de transações recentes.
+    """
+    now = datetime.datetime.now()
+    return now.strftime("%Y-%m-%d %H:%M:%S")
+
 @tool
 def search_web(query: str) -> str:
     """
-    Ferramenta de busca na Web.
-    Use APENAS para:
-    1. Códigos de erro desconhecidos ou documentações externas (Fiserv/Bandeiras).
-    2. Notícias recentes ou status da AWS.
+    Ferramenta de busca na Web (Tavily).
     
-    NÃO USE para perguntas sobre a GSurf (Telefones, Horários, Pix). Essas informações já estão na sua memória.
+    Use APENAS para:
+    1. Pesquisar códigos de erro DESCONHECIDOS que não estão na base interna.
+    2. Verificar status atual de serviços externos (AWS, Redes de Adquirência).
+    3. Buscar documentações técnicas recentes de bandeiras (Visa/Mastercard) pós-2024.
+    
+    NÃO USE para:
+    - Perguntas sobre a GSurf (Telefones, Endereços, Pix). Use seu conhecimento interno.
     """
     tavily_key = os.getenv("TAVILY_API_KEY")
     if not tavily_key:
-        return "Erro: TAVILY_API_KEY não configurada."
+        return "Erro: TAVILY_API_KEY não configurada no ambiente."
     
-    search = TavilySearchResults(max_results=2) 
-    return search.invoke(query)
+    try:
+        search = TavilySearchResults(max_results=2) 
+        return search.invoke(query)
+    except Exception as e:
+        return f"Falha na busca web: {str(e)}"
 
-tools = [search_web]
+# Lista de ferramentas disponíveis para o agente
+tools = [search_web, get_current_datetime]
 
 # ======================================================
-# SYSTEM PROMPT (Base de Conhecimento Estática + Persona)
+# SYSTEM PROMPT (CÉREBRO DO CIPRIANO)
 # ======================================================
 system_prompt_content = """
-Você é o **Cipriano**, Engenheiro de Soluções e Especialista em Meios de Pagamento da GSurf.
-Sua inteligência não se limita a dar telefones; você entende a arquitetura completa de uma transação financeira.
+<persona>
+Você é o **Cipriano**, Engenheiro de Soluções Sênior e Especialista em Meios de Pagamento da GSurf.
+Sua inteligência é técnica, precisa e orientada a solução. Você não "acha", você "diagnostica".
+</persona>
 
-### 1. DIRETRIZES DE PERSONALIDADE
-* **Papel:** Especialista Técnico Sênior.
-* **Postura:** Resolutiva, didática (quando necessário) e extremamente precisa.
-* **Foco:** Diagnosticar onde está a falha na cadeia de pagamento e fornecer a solução técnica ou o canal correto.
+<diretrizes>
+1. **Postura:** Resolutiva e Técnica. Não peça desculpas excessivas. Vá direto ao ponto.
+2. **Imagens:** Se o usuário enviar uma imagem (print de erro, foto de maquininha), ANALISE a imagem visualmente antes de responder. Extraia códigos de erro, textos da tela e luzes acesas.
+3. **Foco:** Diagnosticar a falha na cadeia (Emissor -> Bandeira -> Adquirente -> GSurf/TEF).
+</diretrizes>
 
-### 2. FATOS IMUTÁVEIS E CANAIS (A VERDADE ABSOLUTA)
-* **SUPORTE TÉCNICO 24/7:** 0800-644-4833 (Funciona 24h por dia, todos os dias).
-* **TELEFONE GERAL:** (48) 3254-8900
-* **COMERCIAL:** (48) 3254-8700 | comercial@gsurfnet.com
-* **SITE:** www.gsurfnet.com
+<base_de_conhecimento>
+**CANAIS CRÍTICOS:**
+* Suporte Técnico 24/7: **0800-644-4833**
+* Telefone Geral: (48) 3254-8900
+* Comercial: (48) 3254-8700 | comercial@gsurfnet.com
+* Site: www.gsurfnet.com
 
-### 3. BASE DE CONHECIMENTO: ECOSSISTEMA DE PAGAMENTOS
-Use estas definições para explicar falhas ou fluxos aos clientes:
+**LÓGICA DE DIAGNÓSTICO (Chain of Thought):**
+* Erro "Saldo Insuficiente/Negada": Culpa do **Emissor** (Banco do cliente).
+* Erro "Falha de Comunicação": Verificar Internet Local, VPN ou Instabilidade na **Adquirente**.
+* Erro "Cartão Inválido": Problema no Chip ou **Bandeira**.
+* Erro no E-commerce (CNP): Validar integração API, CVV e ferramentas antifraude (PCI-DSS obrigatório).
 
-**A. Os Atores da Transação:**
-* **Portador:** O dono do cartão.
-* **Emissor (Issuer):** O banco que emitiu o cartão (Nubank, Itaú, Bradesco). *Responsável por aprovar/negar saldo e limite.*
-* **Bandeira (Card Scheme):** A marca/rede (Visa, Mastercard, Elo). *Define as regras globais e conecta Emissor e Adquirente.*
-* **Adquirente (Acquirer):** A empresa que processa o pagamento financeiro (Cielo, Rede, Getnet, Stone). *Liquida o valor para o lojista.*
-* **Sub-adquirente:** Intermediador que facilita a adesão, mas usa uma adquirente por trás (ex: PagSeguro em alguns cenários).
-* **Gateway/TEF (GSurf):** A ponte tecnológica. Nós transportamos a informação da Automação Comercial para a Adquirente com segurança.
+**TABELA PIX (SiTef):**
+* Itaú/Bradesco: Exigem apenas **Chave Pix**.
+* BB/Santander/Cielo/MercadoPago: Exigem **Client ID** + **Client Secret** + **Chave Pix**.
+* Sicoob/Sicredi: Exigem **CNPJ Conta** + **Client ID** + **Client Secret** + **Chave Pix**.
 
-**B. Onde a falha ocorre? (Lógica de Diagnóstico):**
-* **Erro "Saldo Insuficiente" ou "Transação Negada":** A culpa é do **Emissor**. O TEF e a Adquirente funcionaram, mas o banco negou.
-* **Erro "Falha de Comunicação":** Pode ser internet local, VPN ou instabilidade na **Adquirente**.
-* **Erro "Cartão Inválido":** Validação da **Bandeira** ou chip defeituoso.
-
-### 4. BASE TÉCNICA: E-COMMERCE E TRANSAÇÕES DIGITAIS
-Ao falar de vendas online (SiTef Web/Gateway):
-* **Diferença CNP:** No E-commerce (Card Not Present), a segurança é crítica. O uso de **CVV** e ferramentas antifraude é mandatório, diferentemente do TEF físico onde a senha protege a transação.
-* **Integração:** Geralmente via API REST ou HTML Interface.
-* **Segurança:** A GSurf preza pelo PCI-DSS. Nunca peça nem armazene números completos de cartão no chat.
-
-### 5. TABELA TÉCNICA: INTEGRAÇÃO PIX (SiTef)
-Consulte rigorosamente para configurações no SiTef:
-
-| Instituição (PSP) | Credenciais Obrigatórias |
-| :--- | :--- |
-| **Itaú / Bradesco** | Apenas **Chave Pix** |
-| **BB / Santander / Cielo / Mercado Pago / Senff / Original / Efi / Sled** | **Client ID** + **Client Secret** + **Chave Pix** |
-| **Sicoob / Sicredi** | **CNPJ da Conta** + **Client ID** + **Client Secret** + **Chave Pix** |
-
-> *Nota: Se o banco não estiver listado, oriente contatar o Comercial para verificar homologação atualizada.*
-
-### 6. INTEGRAÇÃO TÉCNICA: M-SITEF (ANDROID)
-Para desenvolvedores Mobile integrando via Intent:
-
-* **Action:** `br.com.softwareexpress.sitef.msitef`
-* **Parâmetros Chave:**
-    * `empresaSitef`: Código da loja (Teste: 00000000).
-    * `modalidade`: Função (Geral: 110 para Crédito, 111 para Débito - confirmar tabela vigente).
-    * `transacoesHabilitadas`: Para restringir bandeiras se necessário.
-
-**Snippet de Chamada (Java/Kotlin):**
-```java
-Intent intent = new Intent("br.com.softwareexpress.sitef.msitef");
-intent.putExtra("empresaSitef", "00000000");
-intent.putExtra("enderecoSitef", "192.168.x.x"); // IP do Servidor
-intent.putExtra("valor", "100"); // R$ 1,00
-startActivityForResult(intent, 4321);
+**INTEGRAÇÃO ANDROID (M-SITEF):**
+Action: `br.com.softwareexpress.sitef.msitef`
+Params: `empresaSitef`, `modalidade` (110=Crédito, 111=Débito), `transacoesHabilitadas`.
+</base_de_conhecimento>
 """
 
-def executar_agente(mensagem_usuario: str, imagem_b64: str = None):
-    """
-    Executa o agente Cipriano.
-    """
-    groq_key = os.getenv("GROQ_API_KEY")
-    if not groq_key:
-        return "Erro CRÍTICO: GROQ_API_KEY não configurada."
+# ======================================================
+# INICIALIZAÇÃO DA MEMÓRIA
+# ======================================================
+# Inicializa a memória para persistir conversas entre chamadas
+memory = MemorySaver()
 
-    model = ChatGroq(
-        model="llama-3.1-8b-instant",
-        temperature=0.0, # ZERO temperatura para máxima fidelidade aos fatos
-        api_key=groq_key
-    )
+# Variável global para armazenar o agente (evita recriar a cada chamada)
+_agent_instance = None
 
-    try:
-        agent = create_react_agent(
-            model=model,
-            tools=tools
+def get_agent():
+    """Singleton para instanciar o agente apenas uma vez."""
+    global _agent_instance
+    if _agent_instance is None:
+        groq_key = os.getenv("GROQ_API_KEY")
+        if not groq_key:
+            raise ValueError("Erro CRÍTICO: GROQ_API_KEY não configurada.")
+
+        model = ChatGroq(
+            model=MODEL_ID,
+            temperature=0.0, # Precisão máxima
+            api_key=groq_key,
+            max_retries=2
         )
+        
+        # Cria o agente com memória
+        _agent_instance = create_react_agent(
+            model=model,
+            tools=tools,
+            checkpointer=memory,
+            state_modifier=system_prompt_content # Novo padrão do LangGraph para System Prompt
+        )
+    return _agent_instance
 
-        texto_final = mensagem_usuario
-
-        # Tratamento da imagem
+# ======================================================
+# FUNÇÃO DE EXECUÇÃO
+# ======================================================
+def executar_agente(mensagem_usuario: str, imagem_b64: str = None, session_id: str = "default_session"):
+    """
+    Executa o agente Cipriano com suporte a visão e memória.
+    
+    Args:
+        mensagem_usuario (str): Texto do usuário.
+        imagem_b64 (str): String base64 da imagem (sem o prefixo 'data:image...').
+        session_id (str): ID único da sessão para manter histórico da conversa.
+    """
+    try:
+        agent = get_agent()
+        
+        # Construção da mensagem (Multimodal ou Texto Simples)
+        content_payload = []
+        
+        # 1. Adiciona o texto
+        content_payload.append({"type": "text", "text": mensagem_usuario})
+        
+        # 2. Adiciona a imagem se existir (Formato compatível com OpenAI/Groq Vision)
         if imagem_b64:
-            texto_final += "\n\n[Sistema: O usuário enviou uma imagem. Como sou um modelo de texto, devo pedir para ele descrever o erro ou colar o conteúdo.]"
+            # Garante que o cabeçalho data URI esteja correto
+            if not imagem_b64.startswith("data:"):
+                img_url = f"data:image/jpeg;base64,{imagem_b64}"
+            else:
+                img_url = imagem_b64
+                
+            content_payload.append({
+                "type": "image_url",
+                "image_url": {"url": img_url}
+            })
+            
+        user_message = HumanMessage(content=content_payload)
 
-        user_message = HumanMessage(content=texto_final)
+        # Configuração da Sessão (Thread)
+        config = {"configurable": {"thread_id": session_id}}
 
-        inputs = {
-            "messages": [
-                ("system", system_prompt_content),
-                user_message
-            ]
-        }
-
-        # Thread ID fixa por enquanto (pode ser dinâmica no futuro)
-        config = {"configurable": {"thread_id": "session-1"}}
-
-        resultado = agent.invoke(inputs, config)
+        # Invoca o agente
+        # stream_mode="values" retorna todas as mensagens, pegamos a última
+        resultado = agent.invoke({"messages": [user_message]}, config)
 
         ultima_mensagem = resultado["messages"][-1]
-        if hasattr(ultima_mensagem, "content"):
-            return ultima_mensagem.content
-
-        return str(ultima_mensagem)
+        
+        return ultima_mensagem.content
 
     except Exception as e:
-        return f"Sistema GSurf informa: Erro interno. ({str(e)})"
+        # Log de erro real (em produção usar logger)
+        print(f"ERRO NO AGENTE: {e}")
+        return f"Sistema GSurf informa: Ocorreu uma instabilidade no processamento da sua solicitação. Detalhe técnico: {str(e)}"
+
+# ======================================================
+# EXEMPLO DE USO (Teste local)
+# ======================================================
+if __name__ == "__main__":
+    # Teste 1: Pergunta Simples
+    print("--- Teste 1: Texto ---")
+    resp = executar_agente("Quais os telefones do suporte?", session_id="user_123")
+    print(resp)
+    
+    # Teste 2: Memória (Contexto)
+    print("\n--- Teste 2: Memória ---")
+    resp = executar_agente("E qual o horário de atendimento desse número?", session_id="user_123")
+    print(resp)
