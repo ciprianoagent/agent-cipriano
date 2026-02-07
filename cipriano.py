@@ -126,7 +126,8 @@ def get_agent():
             model=model,
             tools=tools,
             checkpointer=memory,
-            state_modifier=system_prompt_content # Novo padrão do LangGraph para System Prompt
+            # CORREÇÃO AQUI: De 'state_modifier' para 'messages_modifier'
+            messages_modifier=system_prompt_content 
         )
     return _agent_instance
 
