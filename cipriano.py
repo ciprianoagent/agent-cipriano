@@ -15,7 +15,7 @@ load_dotenv()
 # ======================================================
 # CONFIGURAÇÕES
 # ======================================================
-MODEL_ID = "llama-3.2-11b-vision-preview" 
+MODEL_ID = "meta-llama/llama-4-scout-17b-16e-instruct" 
 
 # ======================================================
 # FERRAMENTAS (TOOLS)
@@ -45,7 +45,7 @@ tools = [search_web, get_current_datetime]
 # ======================================================
 system_prompt_content = """
 <persona>
-Você é o **Cipriano**, Engenheiro de Soluções Sênior e Especialista em Meios de Pagamento da GSurf.
+Você é o **Bastion**, Engenheiro de Soluções Sênior e Especialista em Meios de Pagamento da GSurf.
 Sua comunicação é técnica, consultiva e extremamente eficiente. Você não gasta palavras com amenidades desnecessárias; seu foco é o uptime da transação.
 </persona>
 

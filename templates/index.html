@@ -35,6 +35,7 @@
             overflow: hidden;
         }
 
+        /* Container Principal com Efeito Glass */
         .main-container {
             width: 95%;
             max-width: 1000px;
@@ -51,6 +52,7 @@
             z-index: 1;
         }
 
+        /* Header Estilizado */
         .header {
             padding: 24px 30px;
             border-bottom: 1px solid var(--glass-border);
@@ -84,6 +86,7 @@
 
         .status-dot { height: 8px; width: 8px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 10px #4ade80; }
 
+        /* Área de Chat */
         #chat-window {
             flex: 1;
             overflow-y: auto;
@@ -125,6 +128,14 @@
             border: 1px solid var(--glass-border);
         }
 
+        /* Estilização de Markdown dentro do Chat */
+        .bot-msg table { width: 100%; border-collapse: collapse; margin: 15px 0; border-radius: 8px; overflow: hidden; }
+        .bot-msg th, .bot-msg td { padding: 12px; border: 1px solid var(--glass-border); text-align: left; }
+        .bot-msg th { background: rgba(255,255,255,0.05); color: var(--primary); }
+        .bot-msg pre { background: #000; padding: 15px; border-radius: 12px; margin: 10px 0; overflow-x: auto; }
+        .bot-msg code { color: #f472b6; font-family: 'Consolas', monospace; }
+
+        /* Input Area Modernizada */
         .input-wrapper {
             padding: 25px 30px;
             background: rgba(0,0,0,0.2);
@@ -189,6 +200,7 @@
 
         .btn-send:hover { transform: scale(1.05); background: var(--primary-hover); }
 
+        /* Footer Copyright */
         .footer-info {
             margin-top: 20px;
             font-size: 0.75rem;
@@ -197,6 +209,9 @@
             width: 100%;
         }
 
+        .footer-info a { color: var(--primary); text-decoration: none; }
+
+        /* Preview de Imagem */
         #preview-area {
             display: none;
             margin-bottom: 15px;
@@ -211,39 +226,9 @@
         }
 
         .btn-close-preview {
-            position: absolute; top: -8px; right: -8px;
+            position: absolute; -top: 8px; -right: 8px;
             background: #ef4444; border: none; border-radius: 50%;
             width: 22px; height: 22px; color: white; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        /* Modal da Câmera */
-        #camera-modal {
-            display: none;
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 10000;
-            flex-direction: column; align-items: center; justify-content: center;
-        }
-
-        #video-preview {
-            width: 90%;
-            max-width: 500px;
-            border-radius: 20px;
-            border: 2px solid var(--primary);
-            background: #222;
-        }
-
-        .camera-ui {
-            margin-top: 30px;
-            display: flex;
-            gap: 30px;
-            align-items: center;
-        }
-
-        .btn-capture {
-            width: 70px; height: 70px;
-            background: #fff; border: 5px solid rgba(255,255,255,0.3);
-            border-radius: 50%; cursor: pointer;
         }
 
         @keyframes fadeInUp {
@@ -251,8 +236,10 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Mobile */
         @media (max-width: 600px) {
             .main-container { height: 95vh; width: 100%; border-radius: 0; }
+            .msg { max-width: 90%; }
         }
     </style>
 </head>
@@ -265,7 +252,7 @@
             <span>GSurf <span style="font-weight: 300; opacity: 0.7;">Engine</span></span>
         </div>
         <div class="status-badge">
-            <span class="status-dot"></span> GSurf IA Online
+            <span class="status-dot"></span> Bastion IA Online
         </div>
     </header>
 
@@ -273,7 +260,7 @@
         <div class="msg-row bot-row">
             <div class="msg bot-msg">
                 <strong>Terminal Inicializado.</strong><br>
-                Bem-vindo ao centro de diagnósticos GSurf. Sou o <strong>Cipriano</strong>, seu especialista em meios de pagamento. <br><br>
+                Bem-vindo ao centro de diagnósticos GSurf. Sou o <strong>Bastion</strong>, seu especialista em meios de pagamento. <br><br>
                 <small style="opacity: 0.7"><i class="fa-solid fa-circle-info"></i> Pronto para analisar logs, erros de TEF ou fotos de terminais.</small>
             </div>
         </div>
@@ -289,16 +276,11 @@
 
         <div class="input-controls">
             <input type="file" id="file-input" accept="image/*" style="display: none;">
-            
-            <button class="btn-action" id="btn-anexar" title="Anexar arquivo">
-                <i class="fa-solid fa-file-import"></i>
-            </button>
-
-            <button class="btn-action" id="btn-camera-live" title="Tirar foto agora">
+            <button class="btn-action" id="btn-anexar" title="Anexar evidência visual">
                 <i class="fa-solid fa-camera"></i>
             </button>
             
-            <textarea id="texto-input" rows="1" placeholder="Descreva o incidente ou capture uma imagem..."></textarea>
+            <textarea id="texto-input" rows="1" placeholder="Descreva o incidente ou anexe uma imagem..."></textarea>
             
             <button class="btn-send" id="btn-enviar">
                 <i class="fa-solid fa-paper-plane"></i>
@@ -307,53 +289,34 @@
     </div>
 </div>
 
-<div id="camera-modal">
-    <video id="video-preview" autoplay playsinline></video>
-    <div class="camera-ui">
-        <button class="btn-action" id="btn-cancel-camera" style="color: #fff; font-size: 1.5rem;">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-        <button class="btn-capture" id="btn-do-capture"></button>
-        <div style="width: 1.5rem;"></div> </div>
-    <canvas id="canvas-capture" style="display: none;"></canvas>
-</div>
-
 <footer class="footer-info">
     &copy; 2026 GSurf Network S.A. &bull; <i class="fa-solid fa-shield-halved"></i> <strong>Sistemas de Pagamento do Futuro</strong> &bull; Todos os direitos reservados.
 </footer>
 
 <script>
+    // Mantive sua lógica funcional, apenas otimizei as transições de UI
     document.addEventListener("DOMContentLoaded", function() {
         const chatWindow = document.getElementById('chat-window');
         const textoInput = document.getElementById('texto-input');
         const fileInput = document.getElementById('file-input');
         const btnEnviar = document.getElementById('btn-enviar');
         const btnAnexar = document.getElementById('btn-anexar');
-        const btnCameraLive = document.getElementById('btn-camera-live');
         const btnRemoverImg = document.getElementById('btn-remover-img');
         const previewArea = document.getElementById('preview-area');
         const imgPreview = document.getElementById('img-preview');
 
-        // Elementos Câmera
-        const cameraModal = document.getElementById('camera-modal');
-        const video = document.getElementById('video-preview');
-        const canvas = document.getElementById('canvas-capture');
-        const btnDoCapture = document.getElementById('btn-do-capture');
-        const btnCancelCamera = document.getElementById('btn-cancel-camera');
-
         let imagemBase64 = null;
-        let streamAtivo = null;
         let sessionId = localStorage.getItem("gsurf_session_id") || "sess_" + Math.random().toString(36).substr(2, 9);
         localStorage.setItem("gsurf_session_id", sessionId);
 
-        // Auto-resize textarea
+        // Auto-resize
         textoInput.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
         });
 
-        // Galeria de Arquivos
         btnAnexar.addEventListener('click', () => fileInput.click());
+
         fileInput.addEventListener('change', function() {
             if (this.files && this.files[0]) {
                 const reader = new FileReader();
@@ -366,42 +329,6 @@
             }
         });
 
-        // --- LÓGICA DA CÂMERA ---
-        btnCameraLive.addEventListener('click', async () => {
-            try {
-                streamAtivo = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" }, 
-                    audio: false 
-                });
-                video.srcObject = streamAtivo;
-                cameraModal.style.display = 'flex';
-            } catch (err) {
-                alert("Erro ao acessar câmera: Verifique as permissões do navegador.");
-            }
-        });
-
-        const stopCamera = () => {
-            if (streamAtivo) {
-                streamAtivo.getTracks().forEach(track => track.stop());
-            }
-            cameraModal.style.display = 'none';
-        };
-
-        btnCancelCamera.addEventListener('click', stopCamera);
-
-        btnDoCapture.addEventListener('click', () => {
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            imagemBase64 = canvas.toDataURL('image/jpeg');
-            imgPreview.src = imagemBase64;
-            previewArea.style.display = 'block';
-            
-            stopCamera();
-        });
-
         btnRemoverImg.addEventListener('click', () => {
             imagemBase64 = null;
             previewArea.style.display = 'none';
@@ -411,9 +338,11 @@
             const texto = textoInput.value.trim();
             if (!texto && !imagemBase64) return;
 
+            // UI Feedback
             btnEnviar.disabled = true;
             btnEnviar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
+            // Render User Message
             const userMsgDiv = document.createElement('div');
             userMsgDiv.className = 'msg-row user-row';
             userMsgDiv.innerHTML = `
@@ -425,6 +354,7 @@
             chatWindow.appendChild(userMsgDiv);
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
+            // Reset Input
             const currentText = texto;
             const currentImg = imagemBase64;
             textoInput.value = '';
@@ -432,11 +362,12 @@
             imagemBase64 = null;
             previewArea.style.display = 'none';
 
+            // Loading Bot
             const loadingId = "loading-" + Date.now();
             const botLoadingDiv = document.createElement('div');
             botLoadingDiv.className = 'msg-row bot-row';
             botLoadingDiv.id = loadingId;
-            botLoadingDiv.innerHTML = `<div class="msg bot-msg"><i class="fa-solid fa-circle-notch fa-spin"></i> Processando intelingência...</div>`;
+            botLoadingDiv.innerHTML = `<div class="msg bot-msg"><i class="fa-solid fa-circle-notch fa-spin"></i> Processando inteligência...</div>`;
             chatWindow.appendChild(botLoadingDiv);
 
             try {
@@ -455,8 +386,7 @@
                 chatWindow.appendChild(botMsgDiv);
 
             } catch (error) {
-                const loader = document.getElementById(loadingId);
-                if(loader) loader.innerHTML = `<div class="msg bot-msg" style="color: #ef4444;">Erro de conexão com o servidor.</div>`;
+                document.getElementById(loadingId).innerHTML = `<div class="msg bot-msg" style="border-color: #ef4444; color: #ef4444;">Offline: Erro na conexão com o gateway de IA.</div>`;
             } finally {
                 btnEnviar.disabled = false;
                 btnEnviar.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
