@@ -35,7 +35,6 @@
             overflow: hidden;
         }
 
-        /* Container Principal */
         .main-container {
             width: 95%;
             max-width: 1000px;
@@ -61,95 +60,200 @@
         }
 
         .header-title {
-            font-size: 1.4rem; font-weight: 700; display: flex; align-items: center; gap: 12px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .logo-gsurf { color: var(--primary); }
 
         .status-badge {
-            background: rgba(49, 162, 76, 0.15); color: #4ade80;
-            padding: 4px 12px; border-radius: 20px; font-size: 0.75rem;
-            display: flex; align-items: center; gap: 6px;
+            background: rgba(49, 162, 76, 0.15);
+            color: #4ade80;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
             border: 1px solid rgba(74, 222, 128, 0.2);
         }
 
         .status-dot { height: 8px; width: 8px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 10px #4ade80; }
 
-        /* Área de Chat */
         #chat-window {
-            flex: 1; overflow-y: auto; padding: 30px;
-            display: flex; flex-direction: column; gap: 20px;
-            scrollbar-width: thin; scrollbar-color: var(--glass-border) transparent;
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--glass-border) transparent;
         }
+
+        #chat-window::-webkit-scrollbar { width: 6px; }
+        #chat-window::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
 
         .msg-row { display: flex; width: 100%; animation: fadeInUp 0.3s ease; }
         .user-row { justify-content: flex-end; }
         .bot-row { justify-content: flex-start; }
 
         .msg {
-            max-width: 75%; padding: 16px 20px; border-radius: 20px;
-            font-size: 0.95rem; line-height: 1.6; position: relative;
-            word-break: break-word; overflow-wrap: anywhere;
+            max-width: 75%;
+            padding: 16px 20px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            position: relative;
         }
 
-        .user-msg { background: var(--user-bubble); color: white; border-bottom-right-radius: 4px; }
-        .bot-msg { 
-            background: var(--bot-bubble); color: #e0e0e0; 
-            border-bottom-left-radius: 4px; border: 1px solid var(--glass-border);
-            white-space: pre-wrap; 
+        .user-msg {
+            background: var(--user-bubble);
+            color: white;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0, 98, 255, 0.3);
         }
 
-        /* Estilização Markdown */
-        .bot-msg table { width: 100%; border-collapse: collapse; margin: 15px 0; border-radius: 8px; overflow: hidden; }
-        .bot-msg th, .bot-msg td { padding: 12px; border: 1px solid var(--glass-border); }
-        .bot-msg pre { background: #000; padding: 15px; border-radius: 12px; overflow-x: auto; }
+        .bot-msg {
+            background: var(--bot-bubble);
+            color: #e0e0e0;
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--glass-border);
+        }
 
-        /* Input Area */
         .input-wrapper {
-            padding: 25px 30px; background: rgba(0,0,0,0.2);
-            border-top: 1px solid var(--glass-border); border-radius: 0 0 24px 24px;
+            padding: 25px 30px;
+            background: rgba(0,0,0,0.2);
+            border-top: 1px solid var(--glass-border);
+            border-radius: 0 0 24px 24px;
         }
 
         .input-controls {
-            display: flex; gap: 15px; align-items: center;
-            background: rgba(255,255,255,0.05); padding: 8px 18px;
-            border-radius: 30px; border: 1px solid var(--glass-border);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            background: rgba(255,255,255,0.05);
+            padding: 8px 18px;
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .input-controls:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 98, 255, 0.2);
         }
 
         textarea {
-            flex: 1; background: transparent; border: none; color: white;
-            font-size: 0.95rem; padding: 10px 0; resize: none; outline: none;
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 0.95rem;
+            padding: 10px 0;
+            resize: none;
+            outline: none;
+            max-height: 150px;
         }
 
-        .btn-action { background: transparent; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer; }
+        .btn-action {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
         .btn-action:hover { color: var(--primary); }
 
         .btn-send {
-            background: var(--primary); color: white; border: none;
-            width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-send:hover { transform: scale(1.05); background: var(--primary-hover); }
+
+        .footer-info {
+            margin-top: 20px;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-align: center;
+            width: 100%;
+        }
+
+        #preview-area {
+            display: none;
+            margin-bottom: 15px;
+            position: relative;
+            width: fit-content;
+        }
+
+        .preview-box img {
+            height: 100px;
+            border-radius: 12px;
+            border: 2px solid var(--primary);
+        }
+
+        .btn-close-preview {
+            position: absolute; top: -8px; right: -8px;
+            background: #ef4444; border: none; border-radius: 50%;
+            width: 22px; height: 22px; color: white; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* Preview Area */
-        #preview-area { display: none; margin-bottom: 15px; position: relative; width: fit-content; }
-        .preview-box img { height: 100px; border-radius: 12px; border: 2px solid var(--primary); }
-        .btn-close-preview {
-            position: absolute; top: -8px; right: -8px; background: #ef4444; border: none;
-            border-radius: 50%; width: 22px; height: 22px; color: white; cursor: pointer;
-        }
-
-        /* Modal Câmera */
+        /* Modal da Câmera */
         #camera-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 10000; flex-direction: column; align-items: center; justify-content: center;
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 10000;
+            flex-direction: column; align-items: center; justify-content: center;
         }
-        #video-preview { width: 90%; max-width: 500px; border-radius: 20px; border: 2px solid var(--primary); }
-        .camera-ui { margin-top: 30px; display: flex; gap: 30px; align-items: center; }
-        .btn-capture { width: 70px; height: 70px; background: #fff; border: 5px solid rgba(255,255,255,0.3); border-radius: 50%; cursor: pointer; }
 
-        .footer-info { margin-top: 20px; font-size: 0.75rem; color: var(--text-dim); text-align: center; width: 100%; }
+        #video-preview {
+            width: 90%;
+            max-width: 500px;
+            border-radius: 20px;
+            border: 2px solid var(--primary);
+            background: #222;
+        }
 
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .camera-ui {
+            margin-top: 30px;
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .btn-capture {
+            width: 70px; height: 70px;
+            background: #fff; border: 5px solid rgba(255,255,255,0.3);
+            border-radius: 50%; cursor: pointer;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .main-container { height: 95vh; width: 100%; border-radius: 0; }
+        }
     </style>
 </head>
 <body>
@@ -169,7 +273,8 @@
         <div class="msg-row bot-row">
             <div class="msg bot-msg">
                 <strong>Terminal Inicializado.</strong><br>
-                Sou o <strong>Cipriano</strong>. Pronto para analisar logs ou fotos de terminais.
+                Bem-vindo ao centro de diagnósticos GSurf. Sou o <strong>Cipriano</strong>, seu especialista em meios de pagamento. <br><br>
+                <small style="opacity: 0.7"><i class="fa-solid fa-circle-info"></i> Pronto para analisar logs, erros de TEF ou fotos de terminais.</small>
             </div>
         </div>
     </div>
@@ -177,17 +282,27 @@
     <div class="input-wrapper">
         <div id="preview-area">
             <div class="preview-box">
-                <img id="img-preview" src="">
+                <img id="img-preview" src="" alt="Preview">
                 <button class="btn-close-preview" id="btn-remover-img"><i class="fa-solid fa-xmark"></i></button>
             </div>
         </div>
 
         <div class="input-controls">
             <input type="file" id="file-input" accept="image/*" style="display: none;">
-            <button class="btn-action" id="btn-anexar"><i class="fa-solid fa-file-import"></i></button>
-            <button class="btn-action" id="btn-camera-live"><i class="fa-solid fa-camera"></i></button>
-            <textarea id="texto-input" rows="1" placeholder="Descreva o problema..."></textarea>
-            <button class="btn-send" id="btn-enviar"><i class="fa-solid fa-paper-plane"></i></button>
+            
+            <button class="btn-action" id="btn-anexar" title="Anexar arquivo">
+                <i class="fa-solid fa-file-import"></i>
+            </button>
+
+            <button class="btn-action" id="btn-camera-live" title="Tirar foto agora">
+                <i class="fa-solid fa-camera"></i>
+            </button>
+            
+            <textarea id="texto-input" rows="1" placeholder="Descreva o incidente ou capture uma imagem..."></textarea>
+            
+            <button class="btn-send" id="btn-enviar">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
         </div>
     </div>
 </div>
@@ -195,11 +310,12 @@
 <div id="camera-modal">
     <video id="video-preview" autoplay playsinline></video>
     <div class="camera-ui">
-        <button class="btn-action" id="btn-cancel-camera" style="color:white; font-size:1.5rem;"><i class="fa-solid fa-xmark"></i></button>
+        <button class="btn-action" id="btn-cancel-camera" style="color: #fff; font-size: 1.5rem;">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
         <button class="btn-capture" id="btn-do-capture"></button>
-        <div style="width:1.5rem;"></div>
-    </div>
-    <canvas id="canvas-capture" style="display:none;"></canvas>
+        <div style="width: 1.5rem;"></div> </div>
+    <canvas id="canvas-capture" style="display: none;"></canvas>
 </div>
 
 <footer class="footer-info">
@@ -214,55 +330,82 @@
         const btnEnviar = document.getElementById('btn-enviar');
         const btnAnexar = document.getElementById('btn-anexar');
         const btnCameraLive = document.getElementById('btn-camera-live');
+        const btnRemoverImg = document.getElementById('btn-remover-img');
         const previewArea = document.getElementById('preview-area');
         const imgPreview = document.getElementById('img-preview');
+
+        // Elementos Câmera
         const cameraModal = document.getElementById('camera-modal');
         const video = document.getElementById('video-preview');
         const canvas = document.getElementById('canvas-capture');
+        const btnDoCapture = document.getElementById('btn-do-capture');
+        const btnCancelCamera = document.getElementById('btn-cancel-camera');
 
         let imagemBase64 = null;
         let streamAtivo = null;
         let sessionId = localStorage.getItem("gsurf_session_id") || "sess_" + Math.random().toString(36).substr(2, 9);
         localStorage.setItem("gsurf_session_id", sessionId);
 
+        // Auto-resize textarea
         textoInput.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
         });
 
+        // Galeria de Arquivos
         btnAnexar.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', function() {
-            if (this.files[0]) {
+            if (this.files && this.files[0]) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     imagemBase64 = e.target.result;
                     imgPreview.src = imagemBase64;
                     previewArea.style.display = 'block';
-                };
+                }
                 reader.readAsDataURL(this.files[0]);
             }
         });
 
+        // --- LÓGICA DA CÂMERA ---
         btnCameraLive.addEventListener('click', async () => {
             try {
-                streamAtivo = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                streamAtivo = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" }, 
+                    audio: false 
+                });
                 video.srcObject = streamAtivo;
                 cameraModal.style.display = 'flex';
-            } catch (err) { alert("Câmera indisponível."); }
+            } catch (err) {
+                alert("Erro ao acessar câmera: Verifique as permissões do navegador.");
+            }
         });
 
-        document.getElementById('btn-do-capture').addEventListener('click', () => {
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
+        const stopCamera = () => {
+            if (streamAtivo) {
+                streamAtivo.getTracks().forEach(track => track.stop());
+            }
+            cameraModal.style.display = 'none';
+        };
+
+        btnCancelCamera.addEventListener('click', stopCamera);
+
+        btnDoCapture.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
             imagemBase64 = canvas.toDataURL('image/jpeg');
             imgPreview.src = imagemBase64;
             previewArea.style.display = 'block';
+            
             stopCamera();
         });
 
-        const stopCamera = () => { if(streamAtivo) streamAtivo.getTracks().forEach(t => t.stop()); cameraModal.style.display = 'none'; };
-        document.getElementById('btn-cancel-camera').addEventListener('click', stopCamera);
-        document.getElementById('btn-remover-img').addEventListener('click', () => { imagemBase64 = null; previewArea.style.display = 'none'; });
+        btnRemoverImg.addEventListener('click', () => {
+            imagemBase64 = null;
+            previewArea.style.display = 'none';
+        });
 
         async function enviarMensagem() {
             const texto = textoInput.value.trim();
@@ -271,47 +414,52 @@
             btnEnviar.disabled = true;
             btnEnviar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
-            const userRow = document.createElement('div');
-            userRow.className = 'msg-row user-row';
-            userRow.innerHTML = `<div class="msg user-msg">${imagemBase64 ? `<img src="${imagemBase64}" style="max-width:100%; border-radius:8px; margin-bottom:8px;"><br>` : ''}${texto.replace(/\n/g, '<br>')}</div>`;
-            chatWindow.appendChild(userRow);
+            const userMsgDiv = document.createElement('div');
+            userMsgDiv.className = 'msg-row user-row';
+            userMsgDiv.innerHTML = `
+                <div class="msg user-msg">
+                    ${imagemBase64 ? `<img src="${imagemBase64}" style="max-width:100%; border-radius:8px; margin-bottom:8px;"><br>` : ''}
+                    ${texto.replace(/\n/g, '<br>')}
+                </div>
+            `;
+            chatWindow.appendChild(userMsgDiv);
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
-            const payload = { pergunta: texto, imagem: imagemBase64, session_id: sessionId };
-            textoInput.value = ''; textoInput.style.height = 'auto';
-            imagemBase64 = null; previewArea.style.display = 'none';
+            const currentText = texto;
+            const currentImg = imagemBase64;
+            textoInput.value = '';
+            textoInput.style.height = 'auto';
+            imagemBase64 = null;
+            previewArea.style.display = 'none';
 
             const loadingId = "loading-" + Date.now();
-            const botLoading = document.createElement('div');
-            botLoading.className = 'msg-row bot-row'; botLoading.id = loadingId;
-            botLoading.innerHTML = `<div class="msg bot-msg"><i class="fa-solid fa-circle-notch fa-spin"></i> Processando inteligênca...</div>`;
-            chatWindow.appendChild(botLoading);
+            const botLoadingDiv = document.createElement('div');
+            botLoadingDiv.className = 'msg-row bot-row';
+            botLoadingDiv.id = loadingId;
+            botLoadingDiv.innerHTML = `<div class="msg bot-msg"><i class="fa-solid fa-circle-notch fa-spin"></i> Processando intelingência...</div>`;
+            chatWindow.appendChild(botLoadingDiv);
 
             try {
-                const res = await fetch('/chat', {
+                const response = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ pergunta: currentText, imagem: currentImg, session_id: sessionId })
                 });
-                const data = await res.json();
+
+                const data = await response.json();
                 document.getElementById(loadingId).remove();
 
-                // TRATAMENTO DE SEGURANÇA CONTRA TEXTO CORROMPIDO
-                let rawResponse = data.resposta ? data.resposta.trim() : "Sem resposta do servidor.";
-                
-                const botRow = document.createElement('div');
-                botRow.className = 'msg-row bot-row';
-                try {
-                    botRow.innerHTML = `<div class="msg bot-msg">${marked.parse(rawResponse)}</div>`;
-                } catch(e) {
-                    botRow.innerHTML = `<div class="msg bot-msg">${rawResponse}</div>`;
-                }
-                chatWindow.appendChild(botRow);
+                const botMsgDiv = document.createElement('div');
+                botMsgDiv.className = 'msg-row bot-row';
+                botMsgDiv.innerHTML = `<div class="msg bot-msg">${marked.parse(data.resposta)}</div>`;
+                chatWindow.appendChild(botMsgDiv);
 
             } catch (error) {
-                document.getElementById(loadingId).innerHTML = `<div class="msg bot-msg" style="color:#ef4444;">Erro de conexão.</div>`;
+                const loader = document.getElementById(loadingId);
+                if(loader) loader.innerHTML = `<div class="msg bot-msg" style="color: #ef4444;">Erro de conexão com o servidor.</div>`;
             } finally {
-                btnEnviar.disabled = false; btnEnviar.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+                btnEnviar.disabled = false;
+                btnEnviar.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
                 chatWindow.scrollTop = chatWindow.scrollHeight;
             }
         }
@@ -320,5 +468,6 @@
         textoInput.addEventListener('keypress', (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensagem(); }});
     });
 </script>
+
 </body>
 </html>
