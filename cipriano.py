@@ -15,7 +15,7 @@ load_dotenv()
 # ======================================================
 # CONFIGURAÇÕES
 # ======================================================
-MODEL_ID = "llama-3.2-11b-vision-preview" 
+MODEL_ID = "meta-llama/llama-4-scout-17b-16e-instruct" 
 
 # ======================================================
 # FERRAMENTAS (TOOLS)
