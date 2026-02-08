@@ -324,6 +324,10 @@
                     imagemBase64 = e.target.result;
                     imgPreview.src = imagemBase64;
                     previewArea.style.display = 'block';
+
+                    // --- ADICIONE ESTA LINHA ABAIXO ---
+                    fileInput.value = '';
+                    // Isso permite que o evento 'change' dispare novamente na próxima vez
                 }
                 reader.readAsDataURL(this.files[0]);
             }
