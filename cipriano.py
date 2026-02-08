@@ -13,13 +13,11 @@ from langchain_core.messages import HumanMessage
 load_dotenv()
 
 # ======================================================
-# CONFIGURAÇÕES
+# CONFIGURAÇÕES GLOBAIS
 # ======================================================
-MODEL_ID = "meta-llama/llama-4-scout-17b-16e-instruct" 
+MODEL_ID = "meta-llama/llama-4-scout-17b-16e-instruct" # Defina aqui o modelo principal
 
-# ======================================================
-# CONFIGURAÇÃO DE LOGS (Resolve o erro: "logger" is not defined)
-# ======================================================
+# Configuração de LOGS
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("BastionEngine")
 
@@ -36,15 +34,14 @@ def search_web(query: str) -> str:
 tools = [search_web, get_current_datetime]
 
 # ======================================================
-# SYSTEM PROMPT (OMITIDO AQUI POR BREVIDADE, MANTENHA O SEU)
+# SYSTEM PROMPT
 # ======================================================
 system_prompt_content = """
 <persona>
 Você é o **Bastion**, Engenheiro de Soluções Sênior e Especialista em Meios de Pagamento da GSurf.
-Sua comunicação é técnica, consultiva e extremamente eficiente. Você não gasta palavras com amenidades desnecessárias; seu foco é o uptime da transação.
+Sua comunicação é técnica, consultiva e extremamente eficiente.
 </persona>
-
-<contexto_operacional>
+contexto_operacional>
 A GSurf atua como o elo de conectividade entre o PDV (Ponto de Venda) e o mundo dos pagamentos. Seu papel é identificar rapidamente em qual camada da "Cebola de Pagamentos" a falha reside.
 </contexto_operacional>
 
@@ -82,12 +79,13 @@ Ao diagnosticar, siga este padrão:
 2. **Causa Provável:** (Camada da falha)
 3. **Ação Corretiva:** (Passo a passo técnico)
 4. **Escalonamento:** (Se necessário, indicar o canal correto)
-</output_format>"""
+</output_format>
+"""
 
 # ======================================================
-# INICIALIZAÇÃO (Resolve o erro: "memory" is not defined)
+# INICIALIZAÇÃO DO AGENTE
 # ======================================================
-memory = MemorySaver() # Objeto de persistência definido globalmente
+memory = MemorySaver()
 _agent_instance = None
 
 def get_agent():
@@ -98,12 +96,12 @@ def get_agent():
             raise ValueError("GROQ_API_KEY não encontrada no .env")
 
         model = ChatGroq(
-            model="llama-3.3-70b-versatile", 
+            model=MODEL_ID, 
             temperature=0.0, 
             api_key=groq_key
         )
         
-        # AQUI ESTÁ A CORREÇÃO SÊNIOR: state_modifier gerencia o System Prompt
+        # state_modifier gerencia o System Prompt de forma persistente
         _agent_instance = create_react_agent(
             model=model,
             tools=tools,
@@ -119,11 +117,9 @@ def executar_agente(mensagem_usuario: str, imagem_b64: str = None, session_id: s
     try:
         agent = get_agent()
         
-        # 1. Monta o payload (Texto + Imagem Opcional)
         content_payload = [{"type": "text", "text": mensagem_usuario}]
         
         if imagem_b64:
-            # Garante o prefixo data:image para o modelo vision
             img_url = imagem_b64 if imagem_b64.startswith("data:") else f"data:image/jpeg;base64,{imagem_b64}"
             content_payload.append({
                 "type": "image_url",
@@ -131,11 +127,9 @@ def executar_agente(mensagem_usuario: str, imagem_b64: str = None, session_id: s
             })
             
         user_message = HumanMessage(content=content_payload)
-        
-        # 2. Configuração da thread de memória
         config = {"configurable": {"thread_id": session_id}}
         
-        # 3. Invoca o agente (O System Prompt já está no state_modifier)
+        # O agente já possui o system_prompt_content via state_modifier
         resultado = agent.invoke({"messages": [user_message]}, config)
 
         return resultado["messages"][-1].content

@@ -1,54 +1,40 @@
-import os
-import uvicorn
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles # Opcional, mas boa prática
 from pydantic import BaseModel
 from typing import Optional
-
-# Importamos a função do arquivo cipriano.py
-from cipriano import executar_agente
+from cipriano import get_agent, logger
+from langchain_core.messages import HumanMessage
+import asyncio
 
 app = FastAPI(title="GSurf IA Assistant")
-
-# Configura diretório de templates
-# Certifique-se de ter uma pasta chamada 'templates' e o index.html dentro dela
 templates = Jinja2Templates(directory="templates")
 
-# Modelo de Dados (Protocolo de Comunicação Front-Back)
 class RequestData(BaseModel):
     pergunta: str
     imagem: Optional[str] = None
-    session_id: str  # CRUCIAL: Identificador único do usuário para a memória
-
-@app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    """Renderiza a interface de chat."""
-    return templates.TemplateResponse("index.html", {"request": request})
+    session_id: str
 
 @app.post("/chat")
 async def chat_endpoint(payload: RequestData):
-    """
-    Recebe a mensagem + sessão + imagem (opcional)
-    e invoca o agente Cipriano.
-    """
-    try:
-        # Chama o agente passando o ID da sessão para manter o contexto
-        resposta_texto = executar_agente(
-            mensagem_usuario=payload.pergunta, 
-            imagem_b64=payload.imagem,
-            session_id=payload.session_id
-        )
-        
-        return {"resposta": resposta_texto}
+    async def generate():
+        try:
+            agent = get_agent()
+            config = {"configurable": {"thread_id": payload.session_id}}
+            content = [{"type": "text", "text": payload.pergunta}]
+            if payload.imagem:
+                content.append({"type": "image_url", "image_url": {"url": payload.imagem}})
+            
+            async for event in agent.astream_events({"messages": [HumanMessage(content=content)]}, config, version="v2"):
+                if event["event"] == "on_chat_model_stream":
+                    chunk = event["data"]["chunk"].content
+                    if chunk: yield chunk
+        except Exception as e:
+            logger.error(f"Erro no Stream: {e}")
+            yield "⚠️ Falha na conexão com o motor de IA."
 
-    except Exception as e:
-        print(f"Erro no Endpoint /chat: {e}")
-        # Retorna erro amigável para o front não quebrar
-        return {"resposta": f"⚠️ **Erro de Sistema:** Não foi possível processar sua solicitação. Detalhe: {str(e)}"}
+    return StreamingResponse(generate(), media_type="text/plain")
 
-if __name__ == "__main__":
-    # Configuração para rodar no Render/Heroku ou Local
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})

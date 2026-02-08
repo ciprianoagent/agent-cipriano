@@ -318,7 +318,7 @@
 
         btnAnexar.addEventListener('click', () => fileInput.click());
 
-        // Função de compressão de alto nível
+        // Compressão antes do Base64
         function comprimirImagem(file, callback) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -327,7 +327,8 @@
                 img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    const scale = Math.min(800 / img.width, 1);
+                    const MAX_WIDTH = 800;
+                    const scale = Math.min(MAX_WIDTH / img.width, 1);
                     canvas.width = img.width * scale;
                     canvas.height = img.height * scale;
                     const ctx = canvas.getContext('2d');
@@ -337,14 +338,13 @@
             };
         }
 
-        // Evento de seleção corrigido
         fileInput.addEventListener('change', function() {
-             if (this.files && this.files[0]) {
+            if (this.files && this.files[0]) {
                 comprimirImagem(this.files[0], (base64) => {
                     imagemBase64 = base64;
                     imgPreview.src = imagemBase64;
                     previewArea.style.display = 'block';
-                    fileInput.value = ''; // LIMPA O INPUT PARA PERMITIR REENVIO
+                    fileInput.value = ''; // Reset crucial
                 });
             }
         });
