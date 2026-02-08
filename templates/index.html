@@ -226,10 +226,9 @@
         }
 
         .btn-close-preview {
-            position: absolute;
-            top: -10px;    /* Removido o hífen */
-            right: -10px;  /* Removido o hífen */
-            z-index: 100;
+            position: absolute; -top: -10px; -right: -10px;
+            background: #ef4444; border: none; border-radius: 50%;
+            width: 22px; height: 22px; color: white; cursor: pointer;
         }
 
         @keyframes fadeInUp {
@@ -318,34 +317,19 @@
 
         btnAnexar.addEventListener('click', () => fileInput.click());
 
-        // Compressão antes do Base64
-        function comprimirImagem(file, callback) {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
-                    const scale = Math.min(MAX_WIDTH / img.width, 1);
-                    canvas.width = img.width * scale;
-                    canvas.height = img.height * scale;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    callback(canvas.toDataURL('image/jpeg', 0.7));
-                };
-            };
-        }
-
         fileInput.addEventListener('change', function() {
             if (this.files && this.files[0]) {
-                comprimirImagem(this.files[0], (base64) => {
-                    imagemBase64 = base64;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagemBase64 = e.target.result;
                     imgPreview.src = imagemBase64;
                     previewArea.style.display = 'block';
-                    fileInput.value = ''; // Reset crucial
-                });
+
+                    // --- ADICIONE ESTA LINHA ABAIXO ---
+                    fileInput.value = '';
+                    // Isso permite que o evento 'change' dispare novamente na próxima vez
+                }
+                reader.readAsDataURL(this.files[0]);
             }
         });
 
