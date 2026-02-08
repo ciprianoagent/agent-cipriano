@@ -1,14 +1,14 @@
 import os
 import datetime
+import logging
 from dotenv import load_dotenv
 
 # LangChain & LangGraph Imports
 from langgraph.prebuilt import create_react_agent
 from langgraph.checkpoint.memory import MemorySaver
-from langchain_core.tools import tool
 from langchain_groq import ChatGroq
 from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import HumanMessage
 
 load_dotenv()
 
@@ -18,30 +18,25 @@ load_dotenv()
 MODEL_ID = "meta-llama/llama-4-scout-17b-16e-instruct" 
 
 # ======================================================
+# CONFIGURAÇÃO DE LOGS (Resolve o erro: "logger" is not defined)
+# ======================================================
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("BastionEngine")
+
+# ======================================================
 # FERRAMENTAS (TOOLS)
 # ======================================================
-@tool
 def get_current_datetime() -> str:
-    """Retorna a data e hora atual."""
-    now = datetime.datetime.now()
-    return now.strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-@tool
 def search_web(query: str) -> str:
-    """Busca na Web (Tavily)."""
-    tavily_key = os.getenv("TAVILY_API_KEY")
-    if not tavily_key:
-        return "Erro: TAVILY_API_KEY não configurada."
-    try:
-        search = TavilySearchResults(max_results=2) 
-        return search.invoke(query)
-    except Exception as e:
-        return f"Falha na busca web: {str(e)}"
+    search = TavilySearchResults(max_results=2) 
+    return search.invoke(query)
 
 tools = [search_web, get_current_datetime]
 
 # ======================================================
-# SYSTEM PROMPT (O CÉREBRO)
+# SYSTEM PROMPT (OMITIDO AQUI POR BREVIDADE, MANTENHA O SEU)
 # ======================================================
 system_prompt_content = """
 <persona>
@@ -87,36 +82,33 @@ Ao diagnosticar, siga este padrão:
 2. **Causa Provável:** (Camada da falha)
 3. **Ação Corretiva:** (Passo a passo técnico)
 4. **Escalonamento:** (Se necessário, indicar o canal correto)
-</output_format>
-"""
+</output_format>"""
 
 # ======================================================
-# INICIALIZAÇÃO
+# INICIALIZAÇÃO (Resolve o erro: "memory" is not defined)
 # ======================================================
-memory = MemorySaver()
+memory = MemorySaver() # Objeto de persistência definido globalmente
 _agent_instance = None
 
 def get_agent():
-    """Cria o agente SEM passar o system prompt na configuração para evitar erros de versão."""
     global _agent_instance
     if _agent_instance is None:
         groq_key = os.getenv("GROQ_API_KEY")
         if not groq_key:
-            raise ValueError("Erro CRÍTICO: GROQ_API_KEY não configurada.")
+            raise ValueError("GROQ_API_KEY não encontrada no .env")
 
         model = ChatGroq(
-            model=MODEL_ID,
-            temperature=0.0,
-            api_key=groq_key,
-            max_retries=2
+            model="llama-3.3-70b-versatile", 
+            temperature=0.0, 
+            api_key=groq_key
         )
         
-        # VERSÃO BLINDADA: Removemos 'state_modifier' e 'messages_modifier'
-        # Passaremos o prompt manualmente no invoke.
+        # AQUI ESTÁ A CORREÇÃO SÊNIOR: state_modifier gerencia o System Prompt
         _agent_instance = create_react_agent(
             model=model,
             tools=tools,
-            checkpointer=memory
+            checkpointer=memory,
+            state_modifier=system_prompt_content
         )
     return _agent_instance
 
@@ -127,15 +119,12 @@ def executar_agente(mensagem_usuario: str, imagem_b64: str = None, session_id: s
     try:
         agent = get_agent()
         
-        # 1. Monta o payload da mensagem do usuário
-        content_payload = []
-        content_payload.append({"type": "text", "text": mensagem_usuario})
+        # 1. Monta o payload (Texto + Imagem Opcional)
+        content_payload = [{"type": "text", "text": mensagem_usuario}]
         
         if imagem_b64:
-            if not imagem_b64.startswith("data:"):
-                img_url = f"data:image/jpeg;base64,{imagem_b64}"
-            else:
-                img_url = imagem_b64
+            # Garante o prefixo data:image para o modelo vision
+            img_url = imagem_b64 if imagem_b64.startswith("data:") else f"data:image/jpeg;base64,{imagem_b64}"
             content_payload.append({
                 "type": "image_url",
                 "image_url": {"url": img_url}
@@ -143,21 +132,14 @@ def executar_agente(mensagem_usuario: str, imagem_b64: str = None, session_id: s
             
         user_message = HumanMessage(content=content_payload)
         
-        # 2. Monta a lista de mensagens INJETANDO O SYSTEM PROMPT NO INÍCIO
-        # Essa é a forma universal que funciona em qualquer versão do LangGraph
-        mensagens_para_enviar = [
-            SystemMessage(content=system_prompt_content),
-            user_message
-        ]
-
-        # 3. Executa com configuração de thread
+        # 2. Configuração da thread de memória
         config = {"configurable": {"thread_id": session_id}}
         
-        resultado = agent.invoke({"messages": mensagens_para_enviar}, config)
+        # 3. Invoca o agente (O System Prompt já está no state_modifier)
+        resultado = agent.invoke({"messages": [user_message]}, config)
 
-        ultima_mensagem = resultado["messages"][-1]
-        return ultima_mensagem.content
+        return resultado["messages"][-1].content
 
     except Exception as e:
-        print(f"ERRO CRÍTICO NO AGENTE: {e}")
-        return f"Sistema GSurf informa: Erro interno de processamento. ({str(e)})"
+        logger.error(f"Erro no Agente: {e}", exc_info=True)
+        return "⚠️ Ocorreu um erro interno no processamento do Bastion."

@@ -226,9 +226,10 @@
         }
 
         .btn-close-preview {
-            position: absolute; -top: 8px; -right: 8px;
-            background: #ef4444; border: none; border-radius: 50%;
-            width: 22px; height: 22px; color: white; cursor: pointer;
+            position: absolute;
+            top: -10px;    /* Removido o hífen */
+            right: -10px;  /* Removido o hífen */
+            z-index: 100;
         }
 
         @keyframes fadeInUp {
@@ -317,19 +318,34 @@
 
         btnAnexar.addEventListener('click', () => fileInput.click());
 
+        // Função de compressão de alto nível
+        function comprimirImagem(file, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const scale = Math.min(800 / img.width, 1);
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    callback(canvas.toDataURL('image/jpeg', 0.7));
+                };
+            };
+        }
+
+        // Evento de seleção corrigido
         fileInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    imagemBase64 = e.target.result;
+             if (this.files && this.files[0]) {
+                comprimirImagem(this.files[0], (base64) => {
+                    imagemBase64 = base64;
                     imgPreview.src = imagemBase64;
                     previewArea.style.display = 'block';
-
-                    // --- ADICIONE ESTA LINHA ABAIXO ---
-                    fileInput.value = '';
-                    // Isso permite que o evento 'change' dispare novamente na próxima vez
-                }
-                reader.readAsDataURL(this.files[0]);
+                    fileInput.value = ''; // LIMPA O INPUT PARA PERMITIR REENVIO
+                });
             }
         });
 
