@@ -13,16 +13,15 @@ from langchain_core.messages import HumanMessage
 load_dotenv()
 
 # ======================================================
-# CONFIGURAÇÕES GLOBAIS
+# 1. CONFIGURAÇÕES E LOGS (Resolve: "logger" is not defined)
 # ======================================================
-MODEL_ID = "meta-llama/llama-4-scout-17b-16e-instruct" # Defina aqui o modelo principal
+MODEL_ID = "meta-llama/llama-4-scout-17b-16e-instruct" 
 
-# Configuração de LOGS
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("BastionEngine")
 
 # ======================================================
-# FERRAMENTAS (TOOLS)
+# 2. FERRAMENTAS (TOOLS)
 # ======================================================
 def get_current_datetime() -> str:
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -34,14 +33,15 @@ def search_web(query: str) -> str:
 tools = [search_web, get_current_datetime]
 
 # ======================================================
-# SYSTEM PROMPT
+# 3. SYSTEM PROMPT
 # ======================================================
 system_prompt_content = """
 <persona>
 Você é o **Bastion**, Engenheiro de Soluções Sênior e Especialista em Meios de Pagamento da GSurf.
-Sua comunicação é técnica, consultiva e extremamente eficiente.
+Sua comunicação é técnica, consultiva e extremamente eficiente. Você não gasta palavras com amenidades desnecessárias; seu foco é o uptime da transação.
 </persona>
-contexto_operacional>
+
+<contexto_operacional>
 A GSurf atua como o elo de conectividade entre o PDV (Ponto de Venda) e o mundo dos pagamentos. Seu papel é identificar rapidamente em qual camada da "Cebola de Pagamentos" a falha reside.
 </contexto_operacional>
 
@@ -79,13 +79,14 @@ Ao diagnosticar, siga este padrão:
 2. **Causa Provável:** (Camada da falha)
 3. **Ação Corretiva:** (Passo a passo técnico)
 4. **Escalonamento:** (Se necessário, indicar o canal correto)
-</output_format>
+</output_format>)
 """
 
 # ======================================================
-# INICIALIZAÇÃO DO AGENTE
+# 4. INICIALIZAÇÃO (Resolve: "memory" is not defined)
 # ======================================================
-memory = MemorySaver()
+# A variável 'memory' PRECISA ser definida fora da função para ser global
+memory = MemorySaver() 
 _agent_instance = None
 
 def get_agent():
@@ -93,7 +94,7 @@ def get_agent():
     if _agent_instance is None:
         groq_key = os.getenv("GROQ_API_KEY")
         if not groq_key:
-            raise ValueError("GROQ_API_KEY não encontrada no .env")
+            raise ValueError("GROQ_API_KEY não encontrada!")
 
         model = ChatGroq(
             model=MODEL_ID, 
@@ -101,7 +102,7 @@ def get_agent():
             api_key=groq_key
         )
         
-        # state_modifier gerencia o System Prompt de forma persistente
+        # Injeção Sênior via state_modifier
         _agent_instance = create_react_agent(
             model=model,
             tools=tools,
@@ -111,29 +112,27 @@ def get_agent():
     return _agent_instance
 
 # ======================================================
-# EXECUÇÃO
+# 5. EXECUÇÃO
 # ======================================================
 def executar_agente(mensagem_usuario: str, imagem_b64: str = None, session_id: str = "default_session"):
     try:
         agent = get_agent()
         
-        content_payload = [{"type": "text", "text": mensagem_usuario}]
-        
+        # Montagem do payload
+        content = [{"type": "text", "text": mensagem_usuario}]
         if imagem_b64:
             img_url = imagem_b64 if imagem_b64.startswith("data:") else f"data:image/jpeg;base64,{imagem_b64}"
-            content_payload.append({
-                "type": "image_url",
-                "image_url": {"url": img_url}
-            })
+            content.append({"type": "image_url", "image_url": {"url": img_url}})
             
-        user_message = HumanMessage(content=content_payload)
+        user_message = HumanMessage(content=content)
         config = {"configurable": {"thread_id": session_id}}
         
-        # O agente já possui o system_prompt_content via state_modifier
+        # O agente já possui o system_prompt via state_modifier
         resultado = agent.invoke({"messages": [user_message]}, config)
 
         return resultado["messages"][-1].content
 
     except Exception as e:
+        # Agora o logger existe e vai registrar o erro real no console
         logger.error(f"Erro no Agente: {e}", exc_info=True)
         return "⚠️ Ocorreu um erro interno no processamento do Bastion."
